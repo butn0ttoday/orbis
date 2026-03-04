@@ -1,2 +1,5 @@
 [phases.setup]
-nixPkgs = ["sqlite"]
+nixPkgs = ["sqlite", "zlib", "gcc"]
+
+[phases.install]
+cmds = ["pip install kerykeion fastapi uvicorn[standard] python-multipart"]
