@@ -154,7 +154,7 @@ footer{text-align:center;padding:50px 0 36px;color:var(--text-dim);font-size:.64
       <div class="form-grid">
         <div class="form-group full"><label data-i18n="label_name">Full Name</label><input type="text" id="c-name" data-i18n-placeholder="ph_name" placeholder="Your name"/></div>
         <div class="form-group"><label data-i18n="label_dob">Date of Birth</label><input type="date" id="c-date"/></div>
-        <div class="form-group"><label data-i18n="label_tob">Time of Birth</label><input type="time" id="c-time" value="12:00"/></div>
+        <div class="form-group"><label data-i18n="label_tob">Time of Birth</label><input type="time" id="c-time" value="12:00" oninput="checkNoonWarning(this)"/><div id="noon-warning" style="display:none;font-size:.6rem;color:#c9a84c;margin-top:5px;letter-spacing:.05em" data-i18n="warn_noon">⚠ If 12:00 is your actual birth time, enter 12:01 for a more accurate chart. Without an exact time, a cosmogram (no houses or Ascendant) will be shown.</div></div>
         <div class="form-group"><label data-i18n="label_city">City</label><input type="text" id="c-city" data-i18n-placeholder="ph_city" placeholder="e.g. London"/></div>
         <div class="form-group"><label data-i18n="label_country">Country Code (2 letters)</label><input type="text" id="c-nation" data-i18n-placeholder="ph_country" placeholder="e.g. GB" maxlength="3"/></div>
       </div>
@@ -285,9 +285,11 @@ const LANGS={
     sec_wheel:"◈ Natal Chart Wheel",sec_planets:"◈ Planetary Positions",
     sec_aspects:"◈ Aspects",sec_houses:"◈ House Cusps",
     sec_today:"today's reading",sec_score:"Cosmic Compatibility Score",sec_synastry:"◈ Synastry Aspects",
+    sec_cosmogram:"◈ Cosmogram — no birth time",
+    warn_noon:"⚠ If 12:00 is your actual birth time, enter 12:01 for a more accurate chart. Without an exact time, a cosmogram (no houses or Ascendant) will be shown.",
     sec_wheel_cosmo:"◈ Cosmogram",
     cosmogram_notice:"Birth time is set to 12:00 — this chart is rendered as a cosmogram. Houses and Ascendant are not shown as they require an accurate birth time.",
-    time_warning:"If you were not born exactly at 12:00, enter your actual birth time for a complete natal chart with houses and Ascendant.",
+    time_warning:"If your actual birth time is 12:00 noon, enter 12:01 instead — this ensures houses and Ascendant are calculated correctly.",
     unknown:"unknown",
     planets:{Sun:"Sun",Moon:"Moon",Mercury:"Mercury",Venus:"Venus",Mars:"Mars",Jupiter:"Jupiter",Saturn:"Saturn",Uranus:"Uranus",Neptune:"Neptune",Pluto:"Pluto",Mean_Node:"North Node",Chiron:"Chiron",Asc:"Asc",MC:"MC"},
     signs:{Aries:"Aries",Taurus:"Taurus",Gemini:"Gemini",Cancer:"Cancer",Leo:"Leo",Virgo:"Virgo",Libra:"Libra",Scorpio:"Scorpio",Sagittarius:"Sagittarius",Capricorn:"Capricorn",Aquarius:"Aquarius",Pisces:"Pisces"},
@@ -327,9 +329,11 @@ const LANGS={
     sec_wheel:"◈ Колесо натальной карты",sec_planets:"◈ Положение планет",
     sec_aspects:"◈ Аспекты",sec_houses:"◈ Куспиды домов",
     sec_today:"чтение на сегодня",sec_score:"Оценка космической совместимости",sec_synastry:"◈ Синастрические аспекты",
+    sec_cosmogram:"◈ Космограмма — без времени рождения",
+    warn_noon:"⚠ Если 12:00 — ваше реальное время рождения, введите 12:01 для более точной карты. Без точного времени будет построена космограмма (без домов и асцендента).",
     sec_wheel_cosmo:"◈ Космограмма",
     cosmogram_notice:"Время рождения указано как 12:00 — карта построена как космограмма. Дома и Асцендент не отображаются, так как требуют точного времени рождения.",
-    time_warning:"Если вы родились не ровно в 12:00, введите точное время рождения для полной натальной карты с домами и Асцендентом.",
+    time_warning:"Если вы действительно родились ровно в 12:00, введите 12:01 — это обеспечит корректный расчёт домов и Асцендента.",
     unknown:"неизвестно",
     planets:{Sun:"Солнце",Moon:"Луна",Mercury:"Меркурий",Venus:"Венера",Mars:"Марс",Jupiter:"Юпитер",Saturn:"Сатурн",Uranus:"Уран",Neptune:"Нептун",Pluto:"Плутон",Mean_Node:"Сев. Узел",Chiron:"Хирон",Asc:"Асц.",MC:"МС"},
     signs:{Aries:"Овен",Taurus:"Телец",Gemini:"Близнецы",Cancer:"Рак",Leo:"Лев",Virgo:"Дева",Libra:"Весы",Scorpio:"Скорпион",Sagittarius:"Стрелец",Capricorn:"Козерог",Aquarius:"Водолей",Pisces:"Рыбы"},
@@ -369,13 +373,15 @@ const LANGS={
     sec_wheel:"◈ Ruota del tema natale",sec_planets:"◈ Posizioni planetarie",
     sec_aspects:"◈ Aspetti",sec_houses:"◈ Cuspidi delle case",
     sec_today:"lettura del giorno",sec_score:"Punteggio di compatibilità cosmica",sec_synastry:"◈ Aspetti di sinastria",
+    sec_cosmogram:"◈ Cosmogramma — senza orario di nascita",
+    warn_noon:"⚠ Se le 12:00 sono il tuo orario di nascita reale, inserisci 12:01 per un tema più accurato. Senza un orario preciso verrà mostrato un cosmogramma (senza case o Ascendente).",
     sec_wheel:"◈ Ruota del tema natale",sec_wheel_cosmo:"◈ Cosmogramma",
     cosmogram_notice:"L'orario di nascita è impostato su 12:00 — il tema è visualizzato come cosmogramma. Le case e l'Ascendente non vengono mostrati perché richiedono un'ora di nascita precisa.",
-    time_warning:"Se non sei nato esattamente alle 12:00, inserisci la tua ora di nascita reale per un tema natale completo con case e Ascendente.",
+    time_warning:"Se sei nato esattamente alle 12:00, inserisci 12:01 — questo garantisce un calcolo corretto delle case e dell'Ascendente.",
     unknown:"sconosciuto",
     sec_wheel_cosmo:"◈ Cosmogramma",
     cosmogram_notice:"L'ora di nascita è impostata alle 12:00 — il tema è reso come cosmogramma. Le case e l'Ascendente non sono mostrati poiché richiedono un'ora di nascita precisa.",
-    time_warning:"Se non sei nato esattamente alle 12:00, inserisci l'ora di nascita reale per un tema natale completo con case e Ascendente.",
+    time_warning:"Se sei nato esattamente alle 12:00, inserisci 12:01 — questo garantisce un calcolo corretto delle case e dell'Ascendente.",
     unknown:"sconosciuto",
     planets:{Sun:"Sole",Moon:"Luna",Mercury:"Mercurio",Venus:"Venere",Mars:"Marte",Jupiter:"Giove",Saturn:"Saturno",Uranus:"Urano",Neptune:"Nettuno",Pluto:"Plutone",Mean_Node:"Nodo Nord",Chiron:"Chirone",Asc:"Asc",MC:"MC"},
     signs:{Aries:"Ariete",Taurus:"Toro",Gemini:"Gemelli",Cancer:"Cancro",Leo:"Leone",Virgo:"Vergine",Libra:"Bilancia",Scorpio:"Scorpione",Sagittarius:"Sagittario",Capricorn:"Capricorno",Aquarius:"Acquario",Pisces:"Pesci"},
@@ -415,13 +421,15 @@ const LANGS={
     sec_wheel:"◈ Horoskoprad",sec_planets:"◈ Planetenpositionen",
     sec_aspects:"◈ Aspekte",sec_houses:"◈ Hauskuspide",
     sec_today:"heutige Lesung",sec_score:"Kosmischer Kompatibilitätswert",sec_synastry:"◈ Synastrie-Aspekte",
+    sec_cosmogram:"◈ Kosmogramm — ohne Geburtszeit",
+    warn_noon:"⚠ Wenn 12:00 deine tatsächliche Geburtszeit ist, gib 12:01 ein für ein genaueres Horoskop. Ohne genaue Zeit wird ein Kosmogramm angezeigt (ohne Häuser oder Aszendent).",
     sec_wheel:"◈ Horoskoprad",sec_wheel_cosmo:"◈ Kosmogramm",
     cosmogram_notice:"Die Geburtszeit ist auf 12:00 Uhr eingestellt — dieses Horoskop wird als Kosmogramm dargestellt. Häuser und Aszendent werden nicht angezeigt, da sie eine genaue Geburtszeit erfordern.",
-    time_warning:"Wenn du nicht genau um 12:00 Uhr geboren wurdest, gib deine tatsächliche Geburtszeit ein, um ein vollständiges Geburtshoroskop mit Häusern und Aszendent zu erhalten.",
+    time_warning:"Wenn du genau um 12:00 Uhr geboren wurdest, gib 12:01 ein — das stellt eine korrekte Berechnung von Häusern und Aszendent sicher.",
     unknown:"unbekannt",
     sec_wheel_cosmo:"◈ Kosmogramm",
     cosmogram_notice:"Die Geburtszeit ist auf 12:00 Uhr gesetzt — das Horoskop wird als Kosmogramm dargestellt. Häuser und Aszendent werden nicht angezeigt, da sie eine genaue Geburtszeit erfordern.",
-    time_warning:"Wenn Sie nicht genau um 12:00 Uhr geboren wurden, geben Sie Ihre tatsächliche Geburtszeit ein, um ein vollständiges Geburtshoroskop mit Häusern und Aszendent zu erhalten.",
+    time_warning:"Wenn Sie genau um 12:00 Uhr geboren wurden, geben Sie 12:01 ein — das stellt eine korrekte Berechnung von Häusern und Aszendent sicher.",
     unknown:"unbekannt",
     planets:{Sun:"Sonne",Moon:"Mond",Mercury:"Merkur",Venus:"Venus",Mars:"Mars",Jupiter:"Jupiter",Saturn:"Saturn",Uranus:"Uranus",Neptune:"Neptun",Pluto:"Pluto",Mean_Node:"Nordknoten",Chiron:"Chiron",Asc:"Asc",MC:"MC"},
     signs:{Aries:"Widder",Taurus:"Stier",Gemini:"Zwillinge",Cancer:"Krebs",Leo:"Löwe",Virgo:"Jungfrau",Libra:"Waage",Scorpio:"Skorpion",Sagittarius:"Schütze",Capricorn:"Steinbock",Aquarius:"Wassermann",Pisces:"Fische"},
@@ -461,9 +469,11 @@ const LANGS={
     sec_wheel:"◈ Koło karty urodzenia",sec_planets:"◈ Pozycje planet",
     sec_aspects:"◈ Aspekty",sec_houses:"◈ Kuspy domów",
     sec_today:"dzisiejsza przepowiednia",sec_score:"Kosmiczny wynik zgodności",sec_synastry:"◈ Aspekty synastrii",
+    sec_cosmogram:"◈ Kosmogram — bez godziny urodzenia",
+    warn_noon:"⚠ Jeśli 12:00 to twoja rzeczywista godzina urodzenia, wpisz 12:01 dla dokładniejszej karty. Bez dokładnej godziny zostanie pokazany kosmogram (bez domów i Ascendentu).",
     sec_wheel_cosmo:"◈ Kosmogram",
     cosmogram_notice:"Godzina urodzenia to 12:00 — karta jest wyświetlana jako kosmogram. Domy i Ascendent nie są pokazywane, ponieważ wymagają dokładnej godziny urodzenia.",
-    time_warning:"Jeśli nie urodziłeś się dokładnie o 12:00, wpisz rzeczywistą godzinę urodzenia, aby uzyskać pełną kartę urodzenia z domami i Ascendentem.",
+    time_warning:"Jeśli urodziłeś się dokładnie o 12:00, wpisz 12:01 — to zapewni poprawne obliczenie domów i Ascendenta.",
     unknown:"nieznany",
     planets:{Sun:"Słońce",Moon:"Księżyc",Mercury:"Merkury",Venus:"Wenus",Mars:"Mars",Jupiter:"Jowisz",Saturn:"Saturn",Uranus:"Uran",Neptune:"Neptun",Pluto:"Pluton",Mean_Node:"Węzeł Płn.",Chiron:"Chiron",Asc:"Asc",MC:"MC"},
     signs:{Aries:"Baran",Taurus:"Byk",Gemini:"Bliźnięta",Cancer:"Rak",Leo:"Lew",Virgo:"Panna",Libra:"Waga",Scorpio:"Skorpion",Sagittarius:"Strzelec",Capricorn:"Koziorożec",Aquarius:"Wodnik",Pisces:"Ryby"},
@@ -512,6 +522,11 @@ function TS(sign){return(LANGS[currentLang].signs&&LANGS[currentLang].signs[sign
 function TE(elem){return(LANGS[currentLang].elements&&LANGS[currentLang].elements[elem])||elem;}
 function TA(asp){return(LANGS[currentLang].aspects&&LANGS[currentLang].aspects[asp])||asp;}
 function TH(sign){return(LANGS[currentLang].horoscopes&&LANGS[currentLang].horoscopes[sign])||LANGS.en.horoscopes[sign]||'';}
+
+function checkNoonWarning(el){
+  const w=document.getElementById('noon-warning');
+  if(w)w.style.display=(el.value==='12:00')?'block':'none';
+}
 
 // ── CHART WHEEL ──────────────────────────────────────────────────────
 function d2r(d){return d*Math.PI/180}
