@@ -78,6 +78,17 @@ HOROSCOPES = {
 }
 
 
+HOUSE_ROMAN = {
+    "First_House": "I", "Second_House": "II", "Third_House": "III",
+    "Fourth_House": "IV", "Fifth_House": "V", "Sixth_House": "VI",
+    "Seventh_House": "VII", "Eighth_House": "VIII", "Ninth_House": "IX",
+    "Tenth_House": "X", "Eleventh_House": "XI", "Twelfth_House": "XII",
+}
+
+def house_to_roman(h):
+    if not h: return "?"
+    return HOUSE_ROMAN.get(h, h)
+
 def get_sign(sign_str):
     key = sign_str[:3].capitalize()
     return SIGN_DATA.get(key, (sign_str, "?", "?", "?"))
@@ -101,7 +112,7 @@ def extract_planet(subject, attr):
             "element": si[2], "modality": si[3],
             "degree": round(p.position, 4),
             "abs_degree": round(abs_pos(p.sign, p.position), 4),
-            "house": getattr(p, 'house_name', '?'),
+            "house": house_to_roman(getattr(p, 'house_name', '?')),
             "retrograde": getattr(p, 'retrograde', False),
             "meaning": PLANET_MEANINGS.get(p.name, ""),
         }
