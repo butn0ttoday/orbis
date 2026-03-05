@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from kerykeion import AstrologicalSubject, SynastryAspects
 from datetime import datetime
 
-app = FastAPI(title="Lumina Astrology Engine")
+app = FastAPI(title="Orbis Astrology Engine")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -80,34 +80,21 @@ HOROSCOPES = {
 HOUSE_ROMAN = ['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII']
 
 
-def get_house_roman(p):
-    """Try every possible attribute kerykeion might use for house placement."""
-    for attr in ('house_name', 'house', 'in_house', 'house_number', 'house_id', 'natal_house'):
-        val = getattr(p, attr, None)
-        if val is None:
-            continue
-        s = str(val).strip()
-        if not s or s == 'None':
-            continue
-        # already roman
-        upper = s.upper()
-        if upper in ('I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'):
-            return upper
-        # numeric
-        digits = ''.join(c for c in s if c.isdigit())
-        if digits:
-            n = int(digits)
-            if 1 <= n <= 12:
-                return HOUSE_ROMAN[n - 1]
-        # named like first_house, First_House
-        named = {
-            'first':1,'second':2,'third':3,'fourth':4,'fifth':5,'sixth':6,
-            'seventh':7,'eighth':8,'ninth':9,'tenth':10,'eleventh':11,'twelfth':12
-        }
-        clean = s.lower().replace('_house','').replace(' house','').strip()
-        if clean in named:
-            return HOUSE_ROMAN[named[clean] - 1]
-    return None
+def house_from_cusps(abs_deg, cusps):
+    """Given a planet's absolute degree (0-360) and list of 12 cusp abs_degrees, return roman numeral."""
+    if not cusps:
+        return ""
+    abs_deg = abs_deg % 360
+    for i in range(12):
+        c1 = cusps[i] % 360
+        c2 = cusps[(i + 1) % 12] % 360
+        if c1 < c2:
+            if c1 <= abs_deg < c2:
+                return HOUSE_ROMAN[i]
+        else:  # wraps around 0
+            if abs_deg >= c1 or abs_deg < c2:
+                return HOUSE_ROMAN[i]
+    return HOUSE_ROMAN[0]
 
 
 def get_sign(sign_str):
@@ -121,11 +108,12 @@ def abs_pos(sign_str, degree):
     except ValueError:
         return degree
 
-def extract_planet(subject, attr):
+def extract_planet(subject, attr, cusp_abs=None):
     try:
         p = getattr(subject, attr)
         si = get_sign(p.sign)
-        house = get_house_roman(p)
+        abs_d = round(abs_pos(p.sign, p.position), 4)
+        house = house_from_cusps(abs_d, cusp_abs) if cusp_abs else ""
         return {
             "name": p.name, "attr": attr,
             "symbol": PLANET_SYMBOLS.get(p.name, p.name[:2]),
@@ -133,8 +121,8 @@ def extract_planet(subject, attr):
             "sign_key": p.sign[:3].capitalize(),
             "element": si[2], "modality": si[3],
             "degree": round(p.position, 4),
-            "abs_degree": round(abs_pos(p.sign, p.position), 4),
-            "house": house or "",
+            "abs_degree": abs_d,
+            "house": house,
             "retrograde": getattr(p, 'retrograde', False),
             "meaning": PLANET_MEANINGS.get(p.name, ""),
         }
@@ -205,8 +193,13 @@ async def get_chart(data: BirthData):
             name=data.name, year=data.year, month=data.month, day=data.day,
             hour=data.hour, minute=data.minute, city=data.city, nation=data.nation, online=True,
         )
+
+        # compute house cusps first so we can assign planets to houses
+        houses = compute_houses(s) if not is_cosmogram else []
+        cusp_abs = [h["abs_degree"] for h in houses] if houses else None
+
         planet_attrs = ["sun","moon","mercury","venus","mars","jupiter","saturn","uranus","neptune","pluto","mean_node","chiron"]
-        planets = [p for p in [extract_planet(s, a) for a in planet_attrs] if p]
+        planets = [p for p in [extract_planet(s, a, cusp_abs) for a in planet_attrs] if p]
 
         if not is_cosmogram:
             for name, attr, sym, meaning in [("Asc","first_house","AC","rising sign, outer self"),("MC","tenth_house","MC","career, public life, destiny")]:
@@ -222,7 +215,6 @@ async def get_chart(data: BirthData):
                     pass
 
         aspects = compute_aspects([p for p in planets if p["name"] not in ["Asc","MC"]])
-        houses = compute_houses(s) if not is_cosmogram else []
 
         sun_info = get_sign(s.sun.sign)
         moon_info = get_sign(s.moon.sign)
@@ -280,3 +272,87 @@ async def get_horoscope(sign: str):
     if sign not in HOROSCOPES:
         raise HTTPException(status_code=404, detail="Sign not found")
     return {"sign": sign, "horoscope": HOROSCOPES[sign], "date": datetime.now().strftime("%B %d, %Y")}
+
+
+class TransitData(BaseModel):
+    natal: BirthData
+    transit_date: str = ""   # YYYY-MM-DD, defaults to today
+    transit_city: str = ""
+    transit_nation: str = "US"
+
+@app.post("/api/transits")
+async def get_transits(data: TransitData):
+    try:
+        now = datetime.utcnow()
+        if data.transit_date:
+            parts = data.transit_date.split("-")
+            ty, tm, td = int(parts[0]), int(parts[1]), int(parts[2])
+        else:
+            ty, tm, td = now.year, now.month, now.day
+
+        city   = data.transit_city   or data.natal.city
+        nation = data.transit_nation or data.natal.nation
+
+        # natal chart
+        natal = AstrologicalSubject(
+            name=data.natal.name,
+            year=data.natal.year, month=data.natal.month, day=data.natal.day,
+            hour=data.natal.hour, minute=data.natal.minute,
+            city=data.natal.city, nation=data.natal.nation, online=True,
+        )
+
+        # transit "person" — current sky at given date, noon
+        transit = AstrologicalSubject(
+            name="Transit",
+            year=ty, month=tm, day=td,
+            hour=now.hour, minute=now.minute,
+            city=city, nation=nation, online=True,
+        )
+
+        planet_attrs = ["sun","moon","mercury","venus","mars","jupiter","saturn","uranus","neptune","pluto","mean_node","chiron"]
+
+        natal_planets   = [p for p in [extract_planet(natal,   a) for a in planet_attrs] if p]
+        transit_planets = [p for p in [extract_planet(transit, a) for a in planet_attrs] if p]
+
+        # aspects between transit planets and natal planets
+        transit_aspects = []
+        ASPECT_ORBS = {"conjunction":(0,8),"opposition":(180,8),"trine":(120,7),
+                       "square":(90,7),"sextile":(60,5),"quincunx":(150,3)}
+        for tp in transit_planets:
+            for np_ in natal_planets:
+                diff = abs(tp["abs_degree"] - np_["abs_degree"])
+                if diff > 180: diff = 360 - diff
+                for asp_name, (angle, orb) in ASPECT_ORBS.items():
+                    if abs(diff - angle) <= orb:
+                        sym, _, color, _ = ASPECT_DATA[asp_name]
+                        transit_aspects.append({
+                            "transit_planet": tp["name"],
+                            "transit_symbol": tp["symbol"],
+                            "natal_planet":   np_["name"],
+                            "natal_symbol":   np_["symbol"],
+                            "aspect":         asp_name,
+                            "aspect_symbol":  sym,
+                            "color":          color,
+                            "orb":            round(abs(diff - angle), 2),
+                            "t_abs":          tp["abs_degree"],
+                            "n_abs":          np_["abs_degree"],
+                        })
+                        break
+
+        natal_info = get_sign(natal.sun.sign)
+        asc_info   = get_sign(natal.first_house.sign)
+
+        return {
+            "name":           data.natal.name,
+            "transit_date":   f"{td:02d}.{tm:02d}.{ty}",
+            "natal_planets":  natal_planets,
+            "transit_planets": transit_planets,
+            "transit_aspects": transit_aspects,
+            "natal_houses":   compute_houses(natal),
+            "asc_abs":        round(abs_pos(natal.first_house.sign, natal.first_house.position), 4),
+            "sun_sign":       natal_info[0],
+            "ascendant":      asc_info[0],
+            "is_cosmogram":   (data.natal.hour == 12 and data.natal.minute == 0),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
