@@ -289,6 +289,28 @@ async def get_compatibility(data: CompatibilityData):
         raise HTTPException(status_code=400, detail=str(e))
 
 
+@app.get("/api/sky")
+async def get_sky():
+    try:
+        now = datetime.utcnow()
+        sky = AstrologicalSubject(
+            name="Sky", year=now.year, month=now.month, day=now.day,
+            hour=now.hour, minute=now.minute,
+            city="London", nation="GB", online=True,
+        )
+        planet_attrs = ["sun","moon","mercury","venus","mars","jupiter","saturn","uranus","neptune","pluto","mean_node","chiron"]
+        planets = [p for p in [extract_planet(sky, a) for a in planet_attrs] if p]
+        aspects = compute_aspects(planets)
+        return {
+            "planets": planets,
+            "aspects": aspects,
+            "datetime": now.strftime("%d.%m.%Y %H:%M UTC"),
+            "is_cosmogram": True,
+            "asc_abs": 0,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 @app.get("/api/horoscope/{sign}")
 async def get_horoscope(sign: str):
     sign = sign.capitalize()
