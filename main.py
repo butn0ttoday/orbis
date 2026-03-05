@@ -244,23 +244,46 @@ async def get_compatibility(data: CompatibilityData):
             hour=p1.hour, minute=p1.minute, city=p1.city, nation=p1.nation, online=True)
         s2 = AstrologicalSubject(name=p2.name, year=p2.year, month=p2.month, day=p2.day,
             hour=p2.hour, minute=p2.minute, city=p2.city, nation=p2.nation, online=True)
-        synastry = SynastryAspects(s1, s2)
-        aspects = synastry.get_relevant_aspects()
+
+        planet_attrs = ["sun","moon","mercury","venus","mars","jupiter","saturn","uranus","neptune","pluto","mean_node","chiron"]
+        planets1 = [p for p in [extract_planet(s1, a) for a in planet_attrs] if p]
+        planets2 = [p for p in [extract_planet(s2, a) for a in planet_attrs] if p]
+
+        # compute cross-aspects manually for consistent field names
+        ASPECT_ORBS = {"conjunction":(0,8),"opposition":(180,8),"trine":(120,7),
+                       "square":(90,7),"sextile":(60,5),"quincunx":(150,3)}
+        aspects = []
+        for pp1 in planets1:
+            for pp2 in planets2:
+                diff = abs(pp1["abs_degree"] - pp2["abs_degree"])
+                if diff > 180: diff = 360 - diff
+                for asp_name, (angle, orb) in ASPECT_ORBS.items():
+                    if abs(diff - angle) <= orb:
+                        sym, _, color, _ = ASPECT_DATA[asp_name]
+                        aspects.append({
+                            "planet1": pp1["name"], "planet1_symbol": pp1["symbol"],
+                            "planet2": pp2["name"], "planet2_symbol": pp2["symbol"],
+                            "aspect": asp_name, "aspect_symbol": sym, "color": color,
+                            "orb": round(abs(diff - angle), 2),
+                            "p1_abs": pp1["abs_degree"], "p2_abs": pp2["abs_degree"],
+                        })
+                        break
+
         harmonious = sum(1 for a in aspects if a["aspect"] in ["trine","sextile","conjunction"])
-        tense = sum(1 for a in aspects if a["aspect"] in ["square","opposition"])
-        total = len(aspects) if aspects else 1
-        score = min(100, max(0, int((harmonious/total)*100+20)))
+        tense      = sum(1 for a in aspects if a["aspect"] in ["square","opposition"])
+        total      = len(aspects) if aspects else 1
+        score      = min(100, max(0, int((harmonious/total)*100+20)))
+
+        asc1 = round(abs_pos(s1.first_house.sign, s1.first_house.position), 4)
+
         return {
             "person1": p1.name, "person2": p2.name, "score": score,
-            "harmonious_aspects": harmonious, "tense_aspects": tense, "total_aspects": len(aspects),
+            "score_label": "high" if score>=80 else "medium" if score>=60 else "low" if score>=40 else "challenging",
+            "planets1": planets1, "planets2": planets2,
+            "asc_abs": asc1,
+            "natal_houses": compute_houses(s1),
             "sun1": get_sign(s1.sun.sign)[0], "sun2": get_sign(s2.sun.sign)[0],
-            "summary": (
-                f"{p1.name} and {p2.name} share a rare cosmic alignment. Your souls recognize each other across lifetimes." if score>=80
-                else f"{p1.name} and {p2.name} complement each other beautifully. Growth and harmony intertwine in your connection." if score>=60
-                else f"{p1.name} and {p2.name} challenge and transform each other. Tension, when navigated consciously, forges depth." if score>=40
-                else f"{p1.name} and {p2.name} walk very different cosmic paths. Understanding requires patience and real effort."
-            ),
-            "aspects": [{"p1_name":a["p1_name"],"p2_name":a["p2_name"],"aspect":a["aspect"],"orbit":a["orbit"]} for a in aspects[:15]],
+            "aspects": aspects,
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
