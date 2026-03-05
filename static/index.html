@@ -73,6 +73,10 @@ input:focus,select:focus{border-color:var(--gold-dim)}
 .asp-row{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;background:var(--surface);border:1px solid var(--rim);font-size:.75rem}
 .asp-planets{color:var(--silver)}
 .asp-badge{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.06em;padding:2px 7px;border:1px solid}
+.asp-tip{position:relative;cursor:pointer}
+.asp-tooltip{display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--gold-dim);color:var(--text);font-size:.72rem;padding:7px 14px;white-space:nowrap;z-index:50;pointer-events:none;letter-spacing:.04em;font-family:'Cormorant Garamond',serif;font-style:italic}
+.asp-tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--gold-dim)}
+.asp-tip:hover .asp-tooltip,.asp-tip:focus .asp-tooltip,.asp-tip.open .asp-tooltip{display:block}
 .asp-trine,.asp-sextile{color:#6bcb8a;border-color:rgba(107,203,138,.3);background:rgba(107,203,138,.06)}
 .asp-conjunction{color:var(--gold);border-color:rgba(201,168,76,.3);background:rgba(201,168,76,.06)}
 .asp-opposition,.asp-square{color:#e87070;border-color:rgba(232,112,112,.3);background:rgba(232,112,112,.06)}
@@ -246,6 +250,13 @@ let _lastCompatP1=null;
 let _lastCompatP2=null;
 
 function switchTab(n,el){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));el.classList.add('active');document.getElementById('panel-'+n).classList.add('active')}
+
+// mobile tap for aspect tooltips
+document.addEventListener('click',e=>{
+  const row=e.target.closest('.asp-tip');
+  document.querySelectorAll('.asp-tip.open').forEach(el=>{if(el!==row)el.classList.remove('open');});
+  if(row)row.classList.toggle('open');
+});
 
 function parseBirth(pfx){
   const dt=document.getElementById(pfx+'date').value;
@@ -630,13 +641,10 @@ function renderChart(d){
   _lastChartData=d;
   const cosmo=d.is_cosmogram;
 
-  const cosmoWarning=cosmo?`<div style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.25);padding:14px 18px;margin-bottom:24px;font-size:.82rem;color:var(--gold-dim);line-height:1.7">
-    ◈ ${T('cosmogram_notice')}
-  </div>`:'';
-
-  const timeWarning=`<div style="background:rgba(123,108,255,.06);border:1px solid rgba(123,108,255,.2);padding:11px 16px;margin-bottom:20px;font-size:.76rem;color:var(--accent);line-height:1.6">
-    ⚠ ${T('time_warning')}
-  </div>`;
+  // cosmogram: one clear notice. regular chart: noon warning only
+  const topNotice=cosmo
+    ?`<div style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.25);padding:14px 18px;margin-bottom:24px;font-size:.82rem;color:var(--gold-dim);line-height:1.7">◈ ${T('cosmogram_notice')}</div>`
+    :`<div style="background:rgba(123,108,255,.06);border:1px solid rgba(123,108,255,.2);padding:10px 16px;margin-bottom:20px;font-size:.75rem;color:var(--text-dim);line-height:1.6">⚠ ${T('time_warning')}</div>`;
 
   const planetRows=(d.planets||[]).filter(p=>!['Asc','MC'].includes(p.name)).map(p=>{
     const ec=p.element?`elem-${p.element.toLowerCase()}`:'';
@@ -664,11 +672,16 @@ function renderChart(d){
     </div>`;
   }).join(''));
 
-  const aspRows=(d.aspects||[]).slice(0,24).map(a=>`
-    <div class="asp-row">
+  const aspRows=(d.aspects||[]).slice(0,24).map(a=>{
+    const p1sign=((d.planets||[]).find(p=>p.name===a.planet1)||{}).sign||'';
+    const p2sign=((d.planets||[]).find(p=>p.name===a.planet2)||{}).sign||'';
+    const tip=`${TP(a.planet1)} ${TA(a.aspect)} ${TP(a.planet2)}${p1sign?' · '+TS(p1sign):''}${p2sign?' / '+TS(p2sign):''}`;
+    return`<div class="asp-row asp-tip" tabindex="0">
       <span class="asp-planets">${a.planet1_symbol} ${TP(a.planet1)} — ${a.planet2_symbol} ${TP(a.planet2)}</span>
       <span class="asp-badge asp-${a.aspect}">${a.aspect_symbol} ${TA(a.aspect)} ${a.orb}°</span>
-    </div>`).join('');
+      <div class="asp-tooltip">${tip}</div>
+    </div>`;
+  }).join('');
 
   const houseSection=cosmo?'':`
     <div class="houses-section">
@@ -688,8 +701,7 @@ function renderChart(d){
 
   document.getElementById('chart-result').innerHTML=`
   <div class="result-card">
-    ${cosmoWarning}
-    ${timeWarning}
+    ${topNotice}
     <div class="big3">
       <div class="big3-item"><div class="big3-label">${T('lbl_sun')}</div><span class="big3-symbol">${SIGN_ASTRO[d.sun_sign]||'☉'}</span><div class="big3-sign">${TS(d.sun_sign)}</div></div>
       <div class="big3-item"><div class="big3-label">${T('lbl_moon')}</div><span class="big3-symbol">${SIGN_ASTRO[d.moon_sign]||'☽'}</span><div class="big3-sign">${TS(d.moon_sign)}</div></div>
