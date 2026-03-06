@@ -196,6 +196,7 @@ footer{text-align:center;padding:50px 0 36px;color:var(--text-dim);font-size:.64
     <button class="tab active" onclick="switchTab('chart',this)" data-i18n="tab_chart"><span class="tab-icon">☉</span>Birth Chart</button>
     <button class="tab" onclick="switchTab('compat',this)" data-i18n="tab_compat"><span class="tab-icon">♡</span>Compatibility</button>
     <button class="tab" onclick="switchTab('transits',this)" data-i18n="tab_transits"><span class="tab-icon">◎</span>Transits</button>
+    <button class="tab" onclick="switchTab('lunar',this)" data-i18n="tab_lunar"><span class="tab-icon">☽</span>Lunar Return</button>
     <button class="tab" onclick="switchTab('horoscope',this)" data-i18n="tab_horo"><span class="tab-icon">♈︎</span>Horoscope</button>
   </nav>
 
@@ -298,6 +299,29 @@ footer{text-align:center;padding:50px 0 36px;color:var(--text-dim);font-size:.64
       <button class="sign-btn" onclick="getHoroscope('Pisces',this)"><span class="sy">♓︎</span><span class="sn">Pisces</span></button>
     </div>
     <div id="horoscope-result"></div>
+  </div>
+
+  <div class="panel" id="panel-lunar">
+    <div class="form-card">
+      <div class="form-title" data-i18n="lunar_title">☽ Lunar Return</div>
+      <div style="font-size:.72rem;color:var(--text-dim);margin-bottom:16px;letter-spacing:.06em" data-i18n="lunar_hint">Find the moment the Moon returns to its natal position — a new 27-day cycle begins.</div>
+      <div class="form-grid">
+        <div class="form-group full"><label data-i18n="label_name">Full Name</label><input type="text" id="lr-name" data-i18n-placeholder="ph_name" placeholder="Your name"/></div>
+        <div class="form-group"><label data-i18n="label_dob">Date of Birth</label><input type="date" id="lr-date"/></div>
+        <div class="form-group"><label data-i18n="label_tob">Time of Birth</label><input type="time" id="lr-time" value="12:00"/></div>
+        <div class="form-group full">
+          <label data-i18n="label_city">City</label>
+          <div class="city-wrap">
+            <input type="text" id="lr-city" data-i18n-placeholder="ph_city" placeholder="e.g. London" autocomplete="off" oninput="cityAutocomplete(this,'lr-nation','lr-city-dropdown')"/>
+            <input type="hidden" id="lr-nation" value="US"/>
+            <div class="city-dropdown" id="lr-city-dropdown"></div>
+          </div>
+        </div>
+        <div class="form-group"><label data-i18n="lunar_target_month">Target month (optional)</label><input type="month" id="lr-month"/></div>
+      </div>
+      <br><button class="btn" onclick="getLunarReturn()" data-i18n="btn_lunar">Calculate Lunar Return</button>
+    </div>
+    <div id="lunar-result"></div>
   </div>
 
   <footer>
@@ -497,7 +521,7 @@ function toggleTheme(){
 const LANGS={
   en:{
     tagline:"the sky is your map",
-    tab_chart:"Birth Chart",tab_compat:"Compatibility",tab_horo:"Horoscope",
+    tab_chart:"Birth Chart",tab_compat:"Compatibility",tab_horo:"Horoscope",tab_lunar:"Lunar Return",
     chart_title:"◈ Cast Your Natal Chart",
     label_name:"Full Name",label_dob:"Date of Birth",label_tob:"Time of Birth",
     label_city:"City",label_country:"Country Code (2 letters)",
@@ -509,6 +533,7 @@ const LANGS={
     footer_credit:"Designed & developed by Lina Lonskaya, 2026",
     footer_disclaimer:"ORBIS is an independent, non-commercial project created for educational and personal exploration purposes. No monetisation is intended or pursued.",
     loading_chart:"Reading the heavens",loading_compat:"Weaving the threads of fate",loading_horo:"Consulting the stars",
+    lunar_title:"☽ Lunar Return",lunar_hint:"Find the moment the Moon returns to its natal position — a new 27-day cycle begins.",lunar_target_month:"Target month (optional)",btn_lunar:"Calculate Lunar Return",loading_lunar:"Seeking the Moon's return",sec_lunar_chart:"◈ Lunar Return Chart",lunar_return_date:"Lunar return:",lunar_next:"Next return",
     err_fill_chart:"Please fill in name, date, and city.",err_fill_compat:"Please fill in both people's details.",
     lbl_sun:"Sun Sign",lbl_moon:"Moon Sign",lbl_asc:"Ascendant",
     sec_wheel:"◈ Natal Chart Wheel",sec_planets:"◈ Planetary Positions",
@@ -547,7 +572,7 @@ const LANGS={
   },
   ru:{
     tagline:"небо — твоя карта",
-    tab_chart:"Натальная карта",tab_compat:"Совместимость",tab_horo:"Гороскоп",
+    tab_chart:"Натальная карта",tab_compat:"Совместимость",tab_horo:"Гороскоп",tab_lunar:"Лунарный",
     chart_title:"◈ Построить натальную карту",
     label_name:"Полное имя",label_dob:"Дата рождения",label_tob:"Время рождения",
     label_city:"Город",label_country:"Код страны (2 буквы)",
@@ -559,6 +584,7 @@ const LANGS={
     footer_credit:"Дизайн и разработка — Лина Лонская, 2026",
     footer_disclaimer:"ORBIS — независимый некоммерческий проект, созданный в образовательных и личных исследовательских целях. Монетизация не предусмотрена и не преследуется.",
     loading_chart:"Читаем небеса",loading_compat:"Плетём нити судьбы",loading_horo:"Консультируемся со звёздами",
+    lunar_title:"☽ Лунарный гороскоп",lunar_hint:"Найдите момент, когда Луна возвращается в натальную позицию — начинается новый 27-дневный цикл.",lunar_target_month:"Целевой месяц (опционально)",btn_lunar:"Рассчитать лунарный",loading_lunar:"Ищем возврат Луны",sec_lunar_chart:"◈ Лунарная карта",lunar_return_date:"Дата лунарного:",lunar_next:"Следующий возврат",
     err_fill_chart:"Пожалуйста, заполните имя, дату и город.",err_fill_compat:"Пожалуйста, заполните данные обоих людей.",
     lbl_sun:"Знак Солнца",lbl_moon:"Знак Луны",lbl_asc:"Асцендент",
     sec_wheel:"◈ Колесо натальной карты",sec_planets:"◈ Положение планет",
@@ -597,7 +623,7 @@ const LANGS={
   },
   it:{
     tagline:"il cielo è la tua mappa",
-    tab_chart:"Tema Natale",tab_compat:"Compatibilità",tab_horo:"Oroscopo",
+    tab_chart:"Tema Natale",tab_compat:"Compatibilità",tab_horo:"Oroscopo",tab_lunar:"Ritorno Lunare",
     chart_title:"◈ Calcola il tuo tema natale",
     label_name:"Nome completo",label_dob:"Data di nascita",label_tob:"Ora di nascita",
     label_city:"Città",label_country:"Codice paese (2 lettere)",
@@ -609,6 +635,7 @@ const LANGS={
     footer_credit:"Progettato e sviluppato da Lina Lonskaya, 2026",
     footer_disclaimer:"ORBIS è un progetto indipendente e non commerciale, creato a scopo educativo e di esplorazione personale. Non è prevista né perseguita alcuna monetizzazione.",
     loading_chart:"Leggiamo i cieli",loading_compat:"Intrecciamo i fili del destino",loading_horo:"Consultiamo le stelle",
+    lunar_title:"☽ Ritorno Lunare",lunar_hint:"Trova il momento in cui la Luna torna alla sua posizione natale — inizia un nuovo ciclo di 27 giorni.",lunar_target_month:"Mese target (opzionale)",btn_lunar:"Calcola ritorno lunare",loading_lunar:"Cerchiamo il ritorno della Luna",sec_lunar_chart:"◈ Carta del ritorno lunare",lunar_return_date:"Data ritorno:",lunar_next:"Prossimo ritorno",
     err_fill_chart:"Inserisci nome, data e città.",err_fill_compat:"Inserisci i dati di entrambe le persone.",
     lbl_sun:"Segno Solare",lbl_moon:"Segno Lunare",lbl_asc:"Ascendente",
     sec_wheel:"◈ Ruota del tema natale",sec_planets:"◈ Posizioni planetarie",
@@ -651,7 +678,7 @@ const LANGS={
   },
   de:{
     tagline:"der Himmel ist deine Karte",
-    tab_chart:"Geburtshoroskop",tab_compat:"Kompatibilität",tab_horo:"Horoskop",
+    tab_chart:"Geburtshoroskop",tab_compat:"Kompatibilität",tab_horo:"Horoskop",tab_lunar:"Mondhoroskop",
     chart_title:"◈ Dein Geburtshoroskop erstellen",
     label_name:"Vollständiger Name",label_dob:"Geburtsdatum",label_tob:"Geburtszeit",
     label_city:"Stadt",label_country:"Ländercode (2 Buchstaben)",
@@ -663,6 +690,7 @@ const LANGS={
     footer_credit:"Gestaltet und entwickelt von Lina Lonskaya, 2026",
     footer_disclaimer:"ORBIS ist ein unabhängiges, nicht-kommerzielles Projekt, das zu Bildungs- und persönlichen Erkundungszwecken erstellt wurde. Eine Monetarisierung ist weder beabsichtigt noch angestrebt.",
     loading_chart:"Wir lesen die Himmel",loading_compat:"Wir weben die Fäden des Schicksals",loading_horo:"Wir befragen die Sterne",
+    lunar_title:"☽ Mondhoroskop",lunar_hint:"Finde den Moment, in dem der Mond zu seiner natalen Position zurückkehrt — ein neuer 27-Tage-Zyklus beginnt.",lunar_target_month:"Zielmonat (optional)",btn_lunar:"Mondhoroskop berechnen",loading_lunar:"Wir suchen die Mondkehr",sec_lunar_chart:"◈ Mondhoroskop-Karte",lunar_return_date:"Mondkehr:",lunar_next:"Nächste Kehr",
     err_fill_chart:"Bitte Name, Datum und Stadt eingeben.",err_fill_compat:"Bitte die Daten beider Personen eingeben.",
     lbl_sun:"Sonnenzeichen",lbl_moon:"Mondzeichen",lbl_asc:"Aszendent",
     sec_wheel:"◈ Horoskoprad",sec_planets:"◈ Planetenpositionen",
@@ -705,7 +733,7 @@ const LANGS={
   },
   pl:{
     tagline:"niebo jest twoją mapą",
-    tab_chart:"Karta Urodzenia",tab_compat:"Zgodność",tab_horo:"Horoskop",
+    tab_chart:"Karta Urodzenia",tab_compat:"Zgodność",tab_horo:"Horoskop",tab_lunar:"Powrót Księżyca",
     chart_title:"◈ Stwórz swoją kartę urodzenia",
     label_name:"Imię i nazwisko",label_dob:"Data urodzenia",label_tob:"Godzina urodzenia",
     label_city:"Miasto",label_country:"Kod kraju (2 litery)",
@@ -717,6 +745,7 @@ const LANGS={
     footer_credit:"Projekt i realizacja — Lina Lonskaya, 2026",
     footer_disclaimer:"ORBIS to niezależny projekt niekomercyjny, stworzony w celach edukacyjnych i osobistego odkrywania. Nie jest i nie będzie źródłem dochodu.",
     loading_chart:"Czytamy niebiosa",loading_compat:"Splatamy nici przeznaczenia",loading_horo:"Konsultujemy się z gwiazdami",
+    lunar_title:"☽ Powrót Księżyca",lunar_hint:"Znajdź moment, w którym Księżyc wraca na swoją natalną pozycję — zaczyna się nowy 27-dniowy cykl.",lunar_target_month:"Docelowy miesiąc (opcjonalnie)",btn_lunar:"Oblicz powrót Księżyca",loading_lunar:"Szukamy powrotu Księżyca",sec_lunar_chart:"◈ Karta powrotu Księżyca",lunar_return_date:"Data powrotu:",lunar_next:"Następny powrót",
     err_fill_chart:"Proszę wypełnić imię, datę i miasto.",err_fill_compat:"Proszę wypełnić dane obu osób.",
     lbl_sun:"Znak Słońca",lbl_moon:"Znak Księżyca",lbl_asc:"Ascendent",
     sec_wheel:"◈ Koło karty urodzenia",sec_planets:"◈ Pozycje planet",
@@ -1395,6 +1424,100 @@ function renderSky(d){
       <div class="section-title">${T('sec_aspects')} · ${(d.aspects||[]).length}</div>
       <div class="aspects-grid">${aspRows}</div>
     </div>
+  </div>`;
+}
+
+// ── LUNAR RETURN ─────────────────────────────────────────────────────
+async function getLunarReturn(){
+  const dt=document.getElementById('lr-date').value;
+  const tm=document.getElementById('lr-time').value||'12:00';
+  const name=document.getElementById('lr-name').value||'Chart';
+  const city=document.getElementById('lr-city').value;
+  if(!dt||!city){document.getElementById('lunar-result').innerHTML=`<div class="error">${T('err_fill_chart')}</div>`;return;}
+  const[y,mo,d]=dt.split('-').map(Number);
+  const[h,mi]=tm.split(':').map(Number);
+  const nation=document.getElementById('lr-nation').value||'US';
+  const monthVal=document.getElementById('lr-month').value; // "YYYY-MM" or ""
+  let targetYear=0,targetMonth=0;
+  if(monthVal){const[ty,tm2]=monthVal.split('-').map(Number);targetYear=ty;targetMonth=tm2;}
+  const btn=document.querySelector('#panel-lunar .btn');
+  setButtonLoading(btn,true);
+  document.getElementById('lunar-result').innerHTML=`<div class="loading">${T('loading_lunar')}</div>`;
+  try{
+    const res=await fetch('/api/lunar',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({natal:{name,year:y,month:mo,day:d,hour:h,minute:mi,city,nation},year:targetYear,month:targetMonth})});
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.detail);
+    renderLunarReturn(data);
+    scrollToResult('lunar-result');
+  }catch(e){document.getElementById('lunar-result').innerHTML=`<div class="error">Error: ${e.message}</div>`;}
+  finally{setButtonLoading(btn,false);}
+}
+
+function renderLunarReturn(d){
+  const planetRows=(d.planets||[]).filter(p=>!['Asc','MC'].includes(p.name)).map(p=>{
+    const ec=p.element?`elem-${p.element.toLowerCase()}`:'';
+    const deg=Math.floor(p.degree);const min=Math.round((p.degree%1)*60);
+    const signSym=SIGN_ASTRO[p.sign]||'';
+    const houseNum=parseHouse(p.house)||'';
+    return`<div class="planet-row">
+      <span class="p-sym">${p.symbol||p.name[0]}</span>
+      <span class="p-name">${TP(p.name)}${p.retrograde?` <span class="retro">℞</span>`:''}</span>
+      <span class="p-sign ${ec}">${signSym} ${TS(p.sign)}</span>
+      <span class="p-deg">${deg}°${min}'</span>
+      <span class="p-house">${houseNum}</span>
+    </div>`;
+  }).join('');
+
+  const aspRows=(d.aspects||[]).slice(0,24).map(a=>{
+    const tip=`${TP(a.planet1)} ${TA(a.aspect)} ${TP(a.planet2)} · ${a.orb}°`;
+    return`<div class="asp-row asp-tip" tabindex="0">
+      <span class="asp-planets">${a.planet1_symbol} ${TP(a.planet1)} — ${a.planet2_symbol} ${TP(a.planet2)}</span>
+      <span class="asp-badge asp-${a.aspect}">${a.aspect_symbol} ${TA(a.aspect)} ${a.orb}°</span>
+      <div class="asp-tooltip">${tip}</div>
+    </div>`;
+  }).join('');
+
+  const houseSection=`<div class="houses-section">
+    <div class="section-title">${T('sec_houses')}</div>
+    <div class="houses-grid">${(d.houses||[]).map(h=>`
+      <div class="house-item">
+        <div class="h-num">${h.number}</div>
+        <div class="h-sign">${SIGN_ASTRO[h.sign]||''} ${TS(h.sign)}</div>
+        <div class="h-deg">${h.degree}°</div>
+      </div>`).join('')}
+    </div>
+  </div>`;
+
+  document.getElementById('lunar-result').innerHTML=`
+  <div class="result-card">
+    <div style="background:rgba(123,108,255,.07);border:1px solid rgba(123,108,255,.25);padding:14px 20px;margin-bottom:24px;display:flex;align-items:center;gap:14px">
+      <span style="font-size:1.6rem">☽</span>
+      <div>
+        <div style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.2em;color:var(--text-dim);text-transform:uppercase;margin-bottom:3px">${T('lunar_return_date')}</div>
+        <div style="font-family:'Cinzel',serif;font-size:1rem;color:#9b8fff;letter-spacing:.08em">${d.return_datetime}</div>
+      </div>
+    </div>
+    <div class="big3">
+      <div class="big3-item"><div class="big3-label">${T('lbl_moon')}</div><span class="big3-symbol">${SIGN_ASTRO[d.moon_sign]||'☽'}</span><div class="big3-sign">${TS(d.moon_sign)}</div></div>
+      <div class="big3-item"><div class="big3-label">${T('lbl_sun')}</div><span class="big3-symbol">${SIGN_ASTRO[d.sun_sign]||'☉'}</span><div class="big3-sign">${TS(d.sun_sign)}</div></div>
+      <div class="big3-item"><div class="big3-label">${T('lbl_asc')}</div><span class="big3-symbol">${SIGN_ASTRO[d.ascendant]||'↑'}</span><div class="big3-sign">${TS(d.ascendant)}</div></div>
+    </div>
+    <div class="chart-layout">
+      <div class="wheel-box">
+        <div class="section-title">${T('sec_lunar_chart')}</div>
+        ${buildWheel(d)}
+      </div>
+      <div class="planets-box">
+        <div class="section-title">${T('sec_planets')}</div>
+        ${planetRows}
+      </div>
+    </div>
+    <div class="aspects-section">
+      <div class="section-title">${T('sec_aspects')} · ${(d.aspects||[]).length}</div>
+      <div class="aspects-grid">${aspRows||'<p style="color:var(--text-dim);font-size:.8rem">—</p>'}</div>
+    </div>
+    ${houseSection}
   </div>`;
 }
 
